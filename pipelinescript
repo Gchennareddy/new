@@ -26,4 +26,532 @@ node {
 
                    }
     
-}          
+}    
+
+
+https://www.tecmint.com/install-jenkins-on-centos-8/
+ /var/lib/jenkins/secrets/initialAdminPassword
+ 
+ 
+ 
+ Jenkins pipeline is an automation solution that lets you create simple or complex (template) pipelines via the DSL used in each pipeline. Jenkins provides two ways of developing a pipeline scripted and declarative. Traditionally, jenkins jobs were created using jenkins UI called freestyle jobs.
+ 
+ What is jenkinsfile?
+ Jenkinsfile is just a text file, usually checked in along with the project's source code in Git repo. ideally, every application will have its own jenkinsfile.
+ Jenkins can be written in two aspects like SCRIPTED pipeline syntax & DECLARATIVE pipeline syntax.
+ 
+ What is jenkins SCRIPTED pipeline?
+ Jenkins pipelines are traditionally written as scripted pipelines. ideally, the scripted pipeline is stored in jenkins webUI as a jenkins file. The end to end scripted pipeline script is written in Groovy.
+ Jenkinsfile start with the word "NODE"
+      node {
+	      stage('stage 1') {
+		       echo 'hello'
+			}
+		}
+		
+		
+DECLARATIVE pipeline
+
+      pipeline {
+	      agent any
+		      stages{
+			      stage('welcome step') {
+				     steps {
+					   echo 'welcome to Jenkins'
+					   }
+					}
+				}
+			}
+
+
+
+Jenkins declarative pipeline syntax
+    pipeline{
+}
+
+agent  
+  possible values-
+     any
+     none
+     label
+     docker
+     
+stages
+    pipeline {
+          agent {
+			 label 'linux-machine'
+		}
+	  stages {
+	  }
+	}
+	
+	
+stage
+    pipeline {
+		  agent {
+		    label 'linux-machine'
+		}
+	   stages {
+	       stage('build step'){
+		   }
+		}
+	}
+	
+steps
+    pipeline{
+	     agent any
+		 stages{
+		    stage('build step'){
+			   steps{
+			      echo "build stage is running"
+				}
+			}
+		}
+	}
+	
+	
+Parameters
+    string
+	text
+	booleanparam
+	choice
+	password
+	
+	E.g.
+	string - Accepts a value of string type from jenkins user.
+	
+	string(name:'NAME', description:'Please tell me your name?')
+	
+	text - Accepts multi line value from jenkins user
+	
+	text(name:'DESC', description:'Describe about the job details,)
+	
+	booleanparam - Accepts a true/false value from jenkins user
+	booleanparam(name:'SKIP-TEST', description:'want to skip running Test cases?')
+	
+	choice - Jenkins user can choose one among the choices of value provide.
+	choice(name:'BRANCH', choices: ['Master', 'Dev'], description:'choose the branch')
+	
+	password - Accepts a secret like password from jenkins user
+	password(name:'SONAR-SERVER-PWD', description:'Enter SONAR password')
+			 pipeline{
+			      agent any
+				  parameters{
+				        string(name:'NAME', description:'Please tell me your name?')
+						text(name:'DESC', description:'Describe about the job details')
+						booleanparam(name:'SKIP_TEST', description:'want to skip running Test cases?')
+						choice(name:'BRANCH', choices: ['Master', 'Dev'], description:'choose branch')
+						password(name:'SONAR_SERVER_PWD', description:'Enter SONAR password')
+						}
+						stages{
+							stage('printing parameters'){
+							   steps{
+							       echo "Hello ${params.NAME}"
+								   echo "job details: ${params.DESC}"
+								   echo "skip running Test case?: ${params.SKIP_TEST}"
+								   echo "Branch choice: ${params.BRANCH}"
+								   echo "SONAR password: ${params.SONAR_SERVER_PWD}"
+								}
+							}
+						}
+					}
+					
+					
+					
+Script
+
+    pipeline{
+	    agent any
+		parameters{
+		     string(name:'NAME', description:'please tell me your name')
+			 choice(name:'GENDER', choices: ['Male', 'Female'], description:'choose Gender')
+			 }
+			 stages{
+			     stage('printing name'){
+				     steps{
+					    script{
+						    def name = "${params.NAME}"
+							def gender = "${params.GENDER}"
+							if(gender == "Male"){
+							     echo "Mr. $name"
+								 }else{
+								   echo "Mrs.$name"
+								   }
+								}
+						    }
+						}
+					}
+				}
+				
+				
+Method1: CONFIGURE ENVIRONMENT VARIABLE IN JENKINS CI/CD PORTAL
+
+step1: open jenkins server URl (http://localhost:8080)
+step2: Click on manage jenkins from the left sidebar menu
+step3: click on 'configure system' under system configuration.
+step4: scroll down to the 'global properties' section. this is where we will add our environment variables.
+step5: click on the 'Add' button under Environment variables & enter the Key & value.
+step6: click on 'save' Button.
+
+                pipeline{
+				    agent any
+					    stages{
+						    stage('Initialization'){
+							   steps{
+							      echo "${JAVA_INSTALLATION_PATH}"
+								  }
+							}
+					    }
+					}
+					
+METHOD2: CREATING & REFERRING ENVIRONMENT VARIABLE IN Jenkinsfile
+
+                pipeline{
+				    agent any
+					    environment{
+						    DEPLOY_TO = 'production'
+							}
+					     stages{
+						     stage('Initialization'){
+							    steps{
+								   echo "${DEPLOY_TO}"
+								}
+						    }
+						}
+					}
+					
+					
+METHOD3: INITIALIZE ENVIRONMENT VARIABLES USING SH SCRIPTS IN JENKINSFILE
+ 
+				     
+				pipeline{
+				    agent any
+					     stages{
+						     stage('Initialization'){
+							    environment{
+						               JOB_TIME = sh(returnStdout: true, script: "date '+%A %w %y %x").trim()
+								}
+							    steps{
+								   sh 'echo $JOB_TIME'
+								}
+						    }
+						}
+					}
+Load credentials via environment block
+    Creating Credential in jenkins portal
+	    step1: Open jenkins server URL (http://localhost:8080)
+		step2: Click on 'Manage jenkins' from the left sidebar menu.
+		step3: Click on 'manage Credentials' under 'Security'
+		step4: click on the 'Global' hyperlink
+		step5: Click on Add Credentials from the left side menu.
+		        For demonstration, let me use the following values
+				     * Kind - username with password
+					 * Scope - Global
+					 * Username - admin
+					 * Password - root123
+					 * ID - MY_SECRET
+					 * Description - Secret to access server files
+		step6: Click the 'OK' button. Now our credentials are configured.
+		
+		    pipeline{
+				    agent any
+					    environment{
+						    MY_CRED = credentials('MY_SECRET')
+							}
+					     stages{
+						     stage('Initialization'){
+							    steps{
+								   echo "Username is $MY_CRED_USR"
+								   echo "password is $MY_CRED_PSW"
+								}
+						    }
+						}
+					}
+					
+When
+   1.when block
+            pipeline{
+				    agent any
+					     stages{
+						     stage('build'){
+							    when{
+								   branch 'dev'
+								   }
+							    steps{
+								   echo "working on dev branch"
+								}
+						    }
+						}
+					}
+					
+	2.when block using 'Groovy expression
+	
+	        pipeline{
+				    agent any
+					     stages{
+						     stage('build'){
+							    when{
+								   expression{
+								        return env.BRANCH_NAME == 'dev';
+								   }
+								}
+							    steps{
+								   echo "working on dev branch"
+								}
+						    }
+						}
+					}
+					
+	3.when block with 'environment variables'
+	
+	        pipeline{
+				    agent any
+					environment{
+					    DEPLOY_TO = 'production'
+				    }
+					     stages{
+						     stage('Welcome Step'){
+							    when{
+					environment name: 'DEPLOY_TO', value: 'production'
+								   }
+								}
+							    steps{
+								   echo "welcome to LamdaTest"
+								}
+						    }
+						}
+					}
+					
+	4.when block with multiple conditions & all conditions should be satisfied.
+	
+	        pipeline{
+				    agent any
+					environment{
+					    DEPLOY_TO = 'production'
+				    }
+					     stages{
+						     stage('Welcome Step'){
+							    when{
+								   allof {
+								      branch 'master';
+					                  environment name: 'DEPLOY_TO', value: 'production'
+								   }
+								}
+							    steps{
+								   echo "welcome to LamdaTest"
+								}
+						    }
+						}
+					}
+					
+	5.when block with multiple conditions & any of the given conditions should be satisfied.
+	
+	        pipeline{
+				    agent any
+					environment{
+					    DEPLOY_TO = 'production'
+				    }
+					     stages{
+						     stage('Welcome Step'){
+							    when{
+								   anyof {
+								      branch 'master';
+									  branch 'staging'
+								   }
+								}
+							    steps{
+								   echo "welcome to LamdaTest"
+								}
+						    }
+						}
+					}
+					
+Tools:
+
+step1: Open jenkins server URL(http://localhost:8080)
+step2: Click on 'manage jenkins' from left sidebar menu.
+step3: click on 'Global tool configuration' under system configuration.
+step4: scroll down to the maven section & click on maven installations.
+step5: click on the 'add maven' button.Enter the following values in the configuration.
+    * Name - Maven 3.5.0
+	* MAVEN_HOME -Enter the maven installation path in local.
+step6: Click on 'Add Installer' button & choose 'Install from Apache'.
+step7: Choose the Maven version to download. We have chosen the maven version 3.6.3.
+step8: Click on the 'Save' button.
+
+            pipeline{
+				    agent any
+					tools {
+					    maven 'MAVEN_PATH'
+				    }
+					     stages{
+						     stage('Load Tools'){
+							    steps{
+								   sh "mvn -version"
+								}
+						    }
+						}
+					}
+					
+PARALLEL:
+
+        pipeline{
+			agent any
+				stages{
+					stage('parallel stage'){
+					    parallel{
+						    stage('windows script'){
+							     agent{
+								    label "windows"
+									}
+							    steps{
+								   echo "Running in windows agent"
+								   bat 'echo %PATH%'
+								}
+						    }
+							stage('linux script'){
+							     agent{
+								    label "linux"
+						}
+						steps{
+						   sh "Running in Linux agent"
+					}
+				}
+			}
+		}
+	}
+	}
+	
+POST:
+    post block conditions
+	    always
+		changed
+		aborted
+		failure
+		success
+		unstable
+		
+		  pipeline{
+			agent any
+				stages{
+					stage('build step'){
+					   steps{
+					      echo "Build stage is running"
+						  }
+					}
+				}
+				post{
+				    always{
+					   echo "you can always see me"
+					   }
+					success{
+					    echo"I am running because the job ran successfully"
+						  }
+				    unstable{
+					    echo "Gear up ! The build is unstable. Try fix it"
+						}
+				    failure{
+					    echo "omg ! The build failed"
+						}
+					}
+				}
+				
+Marking build as Unstable
+
+
+         pipeline{
+			agent any
+			   tools{
+			       maven 'MAVEN_PATH'
+				   jdk 'jdk8'
+				   }
+				stages{
+					stage('Tools initialization'){
+					   steps{
+					      sh "mvn --version"
+						  sh "java --version"
+						  }
+						}
+						stage('checkout code'){
+					      steps{
+						     git branch: 'master'
+							 url: "https://github.com/iamvickyav/spring-boot-data-H2-embedded.git"
+							 }
+							}
+					    stage('Building Application'){
+					      steps{
+						     sh "mvn clean package"
+						  }
+						}
+						stage('code coverage'){
+						   steps{
+						     jacoco(
+							      excepattern:'**/traget/**.exec',
+								  classpattern: '**/traget/classes',
+								  sourcepattern: '**/src',
+								  inclusionpattern: 'com/iamvickyav/**',
+								  changebuildstatus: true,
+								  minimumInstructioncoverage: '30',
+								  maximumInstructioncoverage: '80')
+								}
+							}
+						}
+					}
+					
+		so if the code coverage is-
+		Less than 30 - build will be marked as Failure.
+		Between 30 & 80 - Build will be marked as Unstable.
+		Above 80 - Build will be marked as Success.
+		
+Triggers:
+
+            Understanding cron:
+			 
+			cron configuration contains 5 fields representing 'minute(0-59)', 'hour(0-23)', day of month(1-31), month of year(1-12), day of the week(0-7).
+			
+			Every 15 minutes -H/15****
+			Every 15 minutes but only between Monday & Friday -H/15***1-5
+			
+			
+	     pipeline{
+			agent any
+            triggers{
+                cron('H/15****')
+                }
+                stages{
+                   stage('Example'){
+                      steps{
+                        echo 'hello world'
+                    }
+				}
+			}
+		}
+		
+	        
+			
+			
+pipeline {
+  agent any
+  stages {
+    stage('Build') {
+        steps {
+            script {
+                    def today = new Date()
+                    def yesterday = today - 1
+                    def daybeforeyesterday = yesterday.previous()
+                    println "Today: " + today.format("MM/dd/yyyy") + " && Yesterday: " +
+                    yesterday.format("MM/dd/yyyy") + " && The Day before yesterday: " +
+                    daybeforeyesterday.format("MM/dd/yyyy")
+                } 
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+www.epfindia.gov.in
